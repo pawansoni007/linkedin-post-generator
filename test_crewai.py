@@ -4,6 +4,7 @@ import os
 import time
 from dotenv import load_dotenv
 from IPython.display import Markdown
+from linkedin_poster import post_content_to_linkedin
 
 load_dotenv()
 
@@ -12,6 +13,10 @@ api_keys = [
     os.getenv("GROQ_API_KEY"),
     os.getenv("GROQ_API_KEY_2")
 ]
+
+linkedin_client_id = os.getenv("LINKEDIN_CLIENT_ID"),
+linkedin_client_secret = os.getenv("LINKEDIN_CLIENT_SECRET")
+   
 api_keys = [key for key in api_keys if key]  # Remove None values
 
 current_api_key_index = 0
@@ -117,7 +122,7 @@ if __name__ == "__main__":
     for attempt in range(max_retries):
         try:
             print(f"Attempt {attempt + 1}/{max_retries} using API key {current_api_key_index + 1}/{len(api_keys)}")
-            result = crew.kickoff(inputs={"topic": "Talk about basics of load balancing and some algorithms with diagrams and examples and use cases"})
+            result = crew.kickoff(inputs={"topic": "I just built an AI-powered content creation system using CrewAI with 3 specialized agents (Content Planner, Writer, and Reviewer) that automatically generates LinkedIn posts and posts them via LinkedIn API. The system includes smart API key rotation for handling rate limits and produces engaging, technical content. Talk about the power of multi-agent AI systems and automation in content creation."})
             
             # Clean up the output by removing <think> content
             clean_content = result.raw
@@ -132,6 +137,17 @@ if __name__ == "__main__":
             with open("output.md", "w", encoding="utf-8") as f:
                 f.write(clean_content)
             print("💾 Output saved to output.md")
+            
+            # Post to LinkedIn
+            print("📱 Posting to LinkedIn...")
+            linkedin_result = post_content_to_linkedin(clean_content)
+            
+            if linkedin_result["success"]:
+                print(f"🎉 {linkedin_result['message']}")
+                print(f"📝 Post ID: {linkedin_result.get('post_id', 'Unknown')}")
+            else:
+                print(f"❌ LinkedIn posting failed: {linkedin_result['error']}")
+            
             break
         except Exception as e:
             if "429" in str(e):
